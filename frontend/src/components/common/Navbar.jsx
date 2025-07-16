@@ -10,12 +10,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 
-import  useLogin from "../../hooks/useAuth";  
+// import  useLogin from "../../layouts/";  
 
 const Navbar = () => {
   // const username = localStorage.getItem("username");
   const role_name = localStorage.getItem("role_name");
-  const { handleLogout } = useLogin();
+  // const { handleLogout } = useLogin();
 
   return (
     <nav
@@ -92,7 +92,7 @@ const Navbar = () => {
               </li>
               <li><hr className="dropdown-divider" /></li>
               <li>
-                <button type="button" className="dropdown-item d-flex align-items-center" onClick={handleLogout} style={{ fontSize: "14px", paddingLeft: "25px" }}>
+                <button type="button" className="dropdown-item d-flex align-items-center"  style={{ fontSize: "14px", paddingLeft: "25px" }}>
                   <FontAwesomeIcon icon={faSignOutAlt} className="me-2" style={{ color: "#DAD3E2" }} />
                   <span>Logout</span>
                 </button>

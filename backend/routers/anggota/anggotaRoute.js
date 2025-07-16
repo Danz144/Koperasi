@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const db = require('../../db');
 
 // Get all anggota
 router.get('/anggota', async (req, res) => {
@@ -28,6 +28,21 @@ router.get('/anggota', async (req, res) => {
     console.error(error);  
     res.status(500).json({ message: 'Server Error' });
   }
+});
+
+router.get('/anggota/list', async (req, res) => {
+    try {
+        const [rows] = await db.execute(`
+            SELECT user_id, name 
+            FROM users 
+            WHERE role = 'anggota'
+            ORDER BY name ASC
+        `);
+        res.json(rows);
+    } catch (error) {
+        console.error("Error fetching member list:", error);
+        res.status(500).json({ message: 'Server Error' });
+    }
 });
 
 // Tambah anggota baru

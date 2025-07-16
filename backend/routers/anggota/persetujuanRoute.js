@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const db = require('../../db');
 
 // GET semua data persetujuan pinjaman
 router.get('/persetujuan', async (req, res) => {

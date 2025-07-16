@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const db = require('../../db');
 
 // Ambil semua data simpanan (JOIN anggota & user untuk info lengkap)
 router.get('/simpanan', async (req, res) => {
@@ -48,33 +48,38 @@ router.post('/simpanan', async (req, res) => {
 });
 
 // Edit simpanan
-router.put("/simpanan/:id", async (req, res) => {
-  try {
+router.put('/simpanan/:id', async (req, res) => {
     const { id } = req.params;
-    const { jenis_simpanan, jumlah, tanggal_simpan, keterangan } = req.body;
+    const { jumlah, jenis_simpanan, keterangan } = req.body;
 
-    if (!jenis_simpanan || !jumlah || !tanggal_simpan) {
-      return res.status(400).json({ message: "Data tidak lengkap" });
+    // FIX: Validasi yang benar untuk operasi EDIT
+    if (!jumlah || !jenis_simpanan) {
+        return res.status(400).json({ message: "Jumlah dan Jenis Simpanan harus diisi." });
     }
 
-    const [result] = await db.execute(
-      `
-      UPDATE simpanan 
-      SET jenis_simpanan = ?, jumlah = ?, tanggal_simpan = ?, keterangan = ?
-      WHERE simpanan_id = ?
-    `,
-      [jenis_simpanan, jumlah, tanggal_simpan, keterangan, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Simpanan tidak ditemukan" });
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+        const [[oldSimpanan]] = await connection.execute('SELECT * FROM simpanan WHERE simpanan_id = ?', [id]);
+        if (!oldSimpanan) {
+            throw new Error('Simpanan tidak ditemukan');
+        }
+        await connection.execute(
+            'UPDATE simpanan SET jumlah = ?, jenis_simpanan = ?, keterangan = ? WHERE simpanan_id = ?',
+            [jumlah, jenis_simpanan, keterangan, id]
+        );
+        const kasKeteranganRef = `Ref Simpanan ID: ${id}`;
+        const kasUpdateQuery = 'UPDATE transaksi_kas SET jumlah = ?, keterangan = ? WHERE keterangan LIKE ?';
+        const newKasKeterangan = `Simpanan ${jenis_simpanan} oleh anggota ID ${oldSimpanan.anggota_id}. ${kasKeteranganRef}`;
+        await connection.execute(kasUpdateQuery, [jumlah, newKasKeterangan, `%${kasKeteranganRef}%`]);
+        await connection.commit();
+        res.json({ message: 'Simpanan berhasil diperbarui' });
+    } catch (error) {
+        await connection.rollback();
+        res.status(500).json({ message: 'Gagal memperbarui simpanan' });
+    } finally {
+        connection.release();
     }
-
-    res.json({ message: "Simpanan berhasil diperbarui" });
-  } catch (error) {
-    console.error("Update Error:", error);
-    res.status(500).json({ message: "Server Error" });
-  }
 });
 
 // Hapus simpanan (hard delete)

@@ -118,7 +118,7 @@ const Sidebar = () => {
       >
         <div className="text-center py-4 fw-bold">
           <Link
-            to="/admin/dashboard"
+            to="/Project_UAS/frontend/src/pages/DashboardAnggota.jsx"
             className="text-blue text-decoration-none d-flex gap-1 align-items-center justify-content-center"
           >
             <FontAwesomeIcon icon={faSackDollar} size="2x" color="#fff" />
@@ -136,9 +136,9 @@ const Sidebar = () => {
         <ul className="nav flex-column px-1 py-3">
           <li className="nav-item mb-2">
             <Link
-              to="/admin/dashboard"
+              to="/Project_UAS/frontend/src/pages/DashboardAnggota.jsx"
               className={`nav-link fw-medium d-flex align-items-center gap-2 ${
-                isActive("/admin/dashboard") ? "active" : ""
+                isActive("/pages/dashboardanggota") ? "active" : ""
               }`}
               style={{ fontSize: "14px" }}
             >
