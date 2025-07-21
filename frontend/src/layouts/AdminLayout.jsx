@@ -1,6 +1,7 @@
 import Sidebar from "../components/common/Sidebar";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
+import DashboardAnggota from "../pages/anggota/DashboardAnggota";
 import { Outlet } from "react-router-dom";
 
 const AdminLayout = () => {
@@ -14,6 +15,7 @@ const AdminLayout = () => {
           <Navbar />
           <div className="">
             <Outlet />
+            <DashboardAnggota />
           </div>
         </div>
         <Footer />
