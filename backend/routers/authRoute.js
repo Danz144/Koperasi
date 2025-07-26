@@ -1,74 +1,108 @@
-const express = require("express");
-const jwt = require("jsonwebtoken");
+// routes/authRoute.js
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const db = require('../db');
 const bcrypt = require("bcrypt");
-const db = require("../db");
 const router = express.Router();
-require("dotenv").config();
+const { body, validationResult } = require("express-validator");
 
-router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+// 🔑 LOGIN
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
 
   try {
-    if (!username || !password) {
-      return res
-        .status(400)
-        .json({ message: "Username and password are required" });
-    }
-
-    const [rows] = await db.execute(
-      `
-  SELECT 
-    u.id,
-    u.username, 
-    u.password_hash,
-    r.name AS role_name, 
-    u.created_at, 
-    u.updated_at 
-  FROM users AS u 
-  INNER JOIN roles AS r ON r.id = u.role_id 
-  WHERE u.username = ?
-`,
-      [username]
+    const [rows] = await db.query(
+      'SELECT * FROM users WHERE status = ? AND email = ?',
+      ['aktif', email]
     );
+
     if (rows.length === 0) {
-      return res.status(401).json({ message: "User Not Found" });
+      return res.status(401).json({ message: 'User not found' });
     }
 
     const user = rows[0];
-    console.log("User row:", user);
-
-    if (!user.password_hash) {
-      return res.status(500).json({ message: "User Password Not Found" });
-    }
-
-    console.log("Input password:", password);
-    console.log("Stored hash:", user.password_hash);
-
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) {
-      return res.status(401).json({ message: "Invalid Password" });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ message: 'Invalid password' });
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    res.json({
-      token,
-      id: user.id,
-      username: user.username,
-      role_name: user.role_name,
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        phone: user.phone,
+        address: user.address,
+      }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
     });
+
+    res
+      .cookie('token', token, { httpOnly: true })
+      .json({ message: 'Login successful' });
+
   } catch (err) {
-    console.error("[LOGIN ERROR]", err.message);
-    res.status(500).json({ message: err.message });
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-router.post("/logout", (req, res) => {
-  res.status(200).json({ message: "Logout Success" });
+// 🔑 REGISTER
+router.post("/register", async (req, res) => {
+  console.log("Register hit:", req.body);
+  const { name, email, phone, role, address, password } = req.body;
+
+  // Validasi data
+  if (!name || !email || !phone || !role || !address || !password) {
+    return res.status(400).json({ message: "Lengkapi semua data" });
+  }
+
+  if (!["ketua", "bendahara", "anggota"].includes(role.toLowerCase())) {
+    return res.status(400).json({ message: "Role tidak valid" });
+  }
+
+  try {
+    const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ message: "Email sudah terdaftar" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const createdAt = new Date();
+
+    const [result] = await db.execute(
+      `INSERT INTO users (name, email, phone, address, password, role, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, email, phone, address, hashedPassword, role, "aktif", createdAt]
+    );
+
+    console.log("User inserted:", result);
+    return res.status(201).json({ message: "Registrasi berhasil" });
+  } catch (err) {
+    console.error("Register error:", err);
+    return res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+
+// 🚪 LOGOUT
+router.post('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({ message: 'Logout successful' });
+});
+
+// 🔒 PROFILE
+router.get('/profile', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ user });
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
 });
 
 module.exports = router;

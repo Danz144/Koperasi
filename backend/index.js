@@ -1,11 +1,13 @@
 const express = require('express');
 const app = express();
 const cors = require('cors')
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 //Anggota
 const authRoute = require('./routers/authRoute');
 const usersRoute = require('./routers/usersRoute');
+const registerAnggotaRoute = require('./routers/registerRoute');
 const anggotaRoute = require('./routers/anggota/anggotaRoute');
 const simpananRoute = require('./routers/anggota/simpananRoute');
 const penarikanSimapananRoute = require('./routers/anggota/penarikanSimapananRoute');
@@ -14,6 +16,7 @@ const angsuranRoute = require('./routers/anggota/angsuranRoute');
 const transaksiKasRoute = require('./routers/anggota/transaksiKasRoute');
 const persetujuanRoute = require('./routers/anggota/persetujuanRoute');
 const pengaturanRoute = require('./routers/anggota/pengaturanRoute');
+
 
 //Ketua
 const dashboardKetuaRoute = require('./routers/ketua/dashboardKetuaRoute');
@@ -24,16 +27,16 @@ const LaporanRoute = require('./routers/ketua/laporanRoute');
 //Bendahara
 const dashboardBendaharaRoute = require('./routers/bendahara/dashboardRoute');
 const TransaksiRoute = require('./routers/bendahara/transaksiRoute');
+const listAnggotaRoute = require('./routers/bendahara/listAnggotaRoute');
 
 
-
- app.use(
-    cors({
-        origin : 'http://localhost:5173',
-        credentials : true,
-    })
-)
+ // Middleware
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
+
+app.use('/api', registerAnggotaRoute);
+app.use('/api', listAnggotaRoute);
 app.use('/api', authRoute);
 app.use('/api', usersRoute);
 app.use('/api', anggotaRoute);
@@ -53,7 +56,7 @@ app.use('/api', LaporanRoute);
 app.use('/api', dashboardBendaharaRoute);
 app.use('/api', TransaksiRoute);
 
-
+  
 
 
 const PORT = process.env.PORT;

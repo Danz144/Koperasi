@@ -1,6 +1,7 @@
+// --- routes/bendaharaDashboardRoute.js ---
 const express = require('express');
 const router = express.Router();
-const db = require('../../db'); 
+const db = require('../../db'); // <-- PENTING: Pastikan path ini benar!
 
 router.get('/bendahara/dashboard', async (req, res) => {
     try {

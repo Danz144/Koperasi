@@ -32,6 +32,36 @@ router.get("/pinjaman", async (req, res) => {
   }
 });
 
+router.get ("/pinjaman/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await db.execute(`
+      SELECT 
+        p.pinjaman_id,
+        p.anggota_id,
+        u.name AS nama_anggota,
+        p.jumlah,
+        p.tenor,
+        p.bunga_persen,
+        p.status,
+        p.tanggal_pengajuan,
+        p.tanggal_persetujuan,
+        p.total_terbayar,
+        p.tanggal_lunas,
+        ketua.name AS disetujui_oleh
+      FROM pinjaman p
+      JOIN anggota a ON p.anggota_id = a.anggota_id
+      JOIN users u ON a.user_id = u.user_id
+      LEFT JOIN users ketua ON p.disetujui_oleh = ketua.user_id
+      WHERE p.pinjaman_id = ?
+    `, [id]);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error GET /pinjaman/:id:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
 // POST: Ajukan pinjaman baru
 router.post("/pinjaman", async (req, res) => {
   try {

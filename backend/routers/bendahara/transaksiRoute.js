@@ -1,6 +1,7 @@
+// --- routes/transaksiRoute.js ---
 const express = require('express');
 const router = express.Router();
-const db = require('../../db'); 
+const db = require('../../db'); // Pastikan path ini benar
 
 /**
  * POST /api/transaksi/simpanan
@@ -11,6 +12,7 @@ const db = require('../../db');
  * 2. INSERT ke tabel `transaksi_kas` sebagai 'masuk'.
  */
 router.post('/transaksi/simpanan', async (req, res) => {
+    console.log(req.body);
     // FIX: Menggunakan snake_case agar konsisten dengan frontend dan DB
     const { anggota_id, jenis, jumlah, keterangan, bendahara_user_id } = req.body;
 
@@ -47,10 +49,10 @@ router.post('/transaksi/simpanan', async (req, res) => {
  */
 // Endpoint untuk Cek Saldo
 router.get('/transaksi/saldo/:anggotaId', async (req, res) => {
-    const { anggotaId } = req.params;
+    const { anggota_id } = req.params;
     try {
         const saldoQuery = `SELECT (SELECT COALESCE(SUM(jumlah), 0) FROM simpanan WHERE anggota_id = ?) - (SELECT COALESCE(SUM(jumlah), 0) FROM penarikan_simpanan WHERE anggota_id = ?) AS saldo;`;
-        const [[result]] = await db.execute(saldoQuery, [anggotaId, anggotaId]);
+        const [[result]] = await db.execute(saldoQuery, [anggota_id]);
         res.json(result);
     } catch (error) {
         res.status(500).json({ message: "Server Error" });
@@ -65,6 +67,7 @@ router.get('/transaksi/saldo/:anggotaId', async (req, res) => {
  */
 // Endpoint untuk Penarikan
 router.post('/transaksi/penarikan', async (req, res) => {
+    console.log(req.body);
     const { anggota_id, jumlah, keterangan, bendahara_user_id } = req.body;
     if (!anggota_id || !jumlah || !bendahara_user_id) return res.status(400).json({ message: "Data tidak lengkap." });
     const connection = await db.getConnection();

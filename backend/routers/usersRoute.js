@@ -29,7 +29,7 @@ router.get("/users", async (req, res) => {
 router.get("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await db.execute(
+    const [rows] = await db.execute(z
       `SELECT user_id, name, email, role, phone, address, status, created_at FROM users WHERE user_id = ?`,
       [id]
     );

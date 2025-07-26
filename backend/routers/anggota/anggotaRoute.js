@@ -33,10 +33,10 @@ router.get('/anggota', async (req, res) => {
 router.get('/anggota/list', async (req, res) => {
     try {
         const [rows] = await db.execute(`
-            SELECT user_id, name 
-            FROM users 
-            WHERE role = 'anggota'
-            ORDER BY name ASC
+            SELECT a.anggota_id, u.name 
+            FROM anggota a
+            JOIN users u ON a.user_id = u.user_id
+            ORDER BY u.name ASC
         `);
         res.json(rows);
     } catch (error) {
